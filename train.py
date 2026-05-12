@@ -407,13 +407,13 @@ def run_training_experiment() -> None:
 
     print("Starting dataset processing...")
     train_src, train_tgt = train_data.process_data()
-    print("Finished train processing")
+    
     
     val_src, val_tgt = val_data.process_data()
-    print("Finished val processing")
+   
     
     test_src, test_tgt = test_data.process_data()
-    print("Finished test processing")
+   
 
     pad_idx = train_data.src_vocab["<pad>"]
 
