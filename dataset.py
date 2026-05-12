@@ -1,3 +1,8 @@
+import torch
+import spacy
+from collections import Counter
+from datasets import load_dataset
+
 class Multi30kDataset:
     def __init__(self, split='train'):
         """
