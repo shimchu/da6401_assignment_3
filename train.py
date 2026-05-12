@@ -138,7 +138,6 @@ def run_epoch(
                 scheduler.step()
 
         total_loss += loss.item()
-        loop.set_postfix(loss=loss.item())   
 
     return total_loss / len(data_iter)
 
@@ -477,7 +476,7 @@ def run_training_experiment() -> None:
         smoothing=0.1
     )
 
-    for epoch in tqdm(range(config["epochs"]), desc="Epochs"):
+    for epoch in range(config["epochs"])):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
         train_loss = run_epoch(
             train_loader,
@@ -500,6 +499,7 @@ def run_training_experiment() -> None:
             is_train=False,
             device=device
         )
+        print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}")
 
         wandb.log({
             "epoch": epoch,
