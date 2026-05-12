@@ -310,7 +310,11 @@ def save_checkpoint(
     "model_config": {
         "src_vocab_size": model.src_embed.num_embeddings,
         "tgt_vocab_size": model.tgt_embed.num_embeddings,
-        "d_model": model.d_model
+        "d_model": model.d_model,
+        "N": model.N,
+        "num_heads": model.num_heads,
+        "d_ff": model.d_ff,
+        "dropout": model.dropout  
     }
     }, path)
 
@@ -475,6 +479,7 @@ def run_training_experiment() -> None:
         pad_idx=pad_idx,
         smoothing=0.1
     )
+    best_val_loss = float("inf")
 
     for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
@@ -499,6 +504,9 @@ def run_training_experiment() -> None:
             is_train=False,
             device=device
         )
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            save_checkpoint(model, optimizer, scheduler, epoch, path="best_model.pth")
         print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}")
 
         wandb.log({
@@ -508,9 +516,12 @@ def run_training_experiment() -> None:
         })
 
         save_checkpoint(model, optimizer, scheduler, epoch)
-
+    ckpt = torch.load("best_model.pth", map_location=device)
+    model.load_state_dict(ckpt["model_state_dict"])
+    model.eval()
     bleu = evaluate_bleu(model, test_loader, train_data.tgt_vocab, device=device)
-
+    print(f"Final BLEU: {bleu:.2f}")
+  
     wandb.log({"test_bleu": bleu})
 
 
