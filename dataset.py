@@ -2,6 +2,7 @@ import torch
 import spacy
 from collections import Counter
 from datasets import load_dataset
+from tqdm import tqdm
 
 class Multi30kDataset:
     def __init__(self, split='train'):
@@ -14,8 +15,11 @@ class Multi30kDataset:
         # TODO: Load dataset, load spacy tokenizers for de and en
         self.dataset = load_dataset("bentrevett/multi30k")[split]
 
-        self.de_tokenizer = spacy.load("de_core_news_sm")
-        self.en_tokenizer = spacy.load("en_core_web_sm")
+        # self.de_tokenizer = spacy.load("de_core_news_sm")
+        # self.en_tokenizer = spacy.load("en_core_web_sm")
+
+        self.de_tokenizer = spacy.load("de_core_news_sm", disable=["parser", "tagger", "ner"])
+        self.en_tokenizer = spacy.load("en_core_web_sm", disable=["parser", "tagger", "ner"])
 
         self.src_vocab = None
         self.tgt_vocab = None
@@ -24,10 +28,10 @@ class Multi30kDataset:
 
 
     def tokenize_de(self, text):
-        return [tok.text.lower() for tok in self.de_tokenizer(text)]
+        return [tok.text.lower() for tok in self.de_tokenizer.tokenizer(text)]
 
     def tokenize_en(self, text):
-        return [tok.text.lower() for tok in self.en_tokenizer(text)]
+        return [tok.text.lower() for tok in self.en_tokenizer.tokenizer(text)]
         
     def build_vocab(self):
         """
@@ -40,7 +44,7 @@ class Multi30kDataset:
         src_counter = Counter()
         tgt_counter = Counter()
 
-        for example in self.dataset:
+        for example in tqdm(self.dataset, desc="Building vocabulary"):
             src_counter.update(self.tokenize_de(example["de"]))
             tgt_counter.update(self.tokenize_en(example["en"]))
 
@@ -74,7 +78,7 @@ class Multi30kDataset:
         tgt_sos = self.tgt_vocab["<sos>"]
         tgt_eos = self.tgt_vocab["<eos>"]
 
-        for example in self.dataset:
+        for example in tqdm(self.dataset, desc="Tokenizing dataset"):
             src_tokens = self.tokenize_de(example["de"])
             tgt_tokens = self.tokenize_en(example["en"])
 

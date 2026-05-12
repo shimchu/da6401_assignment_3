@@ -14,7 +14,7 @@ AUTOGRADER CONTRACT (DO NOT MODIFY SIGNATURES):
   │  load_checkpoint(path, model, optimizer, scheduler)        → int    │
   └─────────────────────────────────────────────────────────────────────┘
 """
-
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -109,8 +109,9 @@ def run_epoch(
     """
     total_loss = 0
     model.train() if is_train else model.eval()
+    loop = tqdm(data_iter, desc="Train" if is_train else "Val", leave=False)
 
-    for src, tgt in data_iter:
+    for src, tgt in loop:
         src = src.to(device)
         tgt = tgt.to(device)
 
@@ -135,6 +136,7 @@ def run_epoch(
                 scheduler.step()
 
         total_loss += loss.item()
+        loop.set_postfix(loss=loss.item())   
 
     return total_loss / len(data_iter)
 
@@ -466,7 +468,8 @@ def run_training_experiment() -> None:
         smoothing=0.1
     )
 
-    for epoch in range(config["epochs"]):
+    for epoch in tqdm(range(config["epochs"]), desc="Epochs"):
+        print(f" Starting Epoch {epoch+1}/{config['epochs']}")
         train_loss = run_epoch(
             train_loader,
             model,
