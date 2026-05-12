@@ -561,7 +561,6 @@ class Transformer(nn.Module):
             logits : shape [batch, tgt_len, tgt_vocab_size]
         """
         x = self.tgt_embed(tgt) * math.sqrt(self.d_model)
-        x = self.tgt_embed(tgt) * math.sqrt(self.d_model)
       
         if self.use_pe:
             x = self.pos_enc(x)
