@@ -470,7 +470,8 @@ class Transformer(nn.Module):
         d_ff:      int   = 2048,
         dropout:   float = 0.1,
         checkpoint_path: str = None,
-        use_scaling = True
+        use_scaling = True,
+        use_positional_encoding=True
     ) -> None:
         super().__init__()
         # TODO: Instantiate 
@@ -478,8 +479,13 @@ class Transformer(nn.Module):
 
         self.d_model = d_model
         self.src_embed = nn.Embedding(src_vocab_size, d_model)
-        self.tgt_embed = nn.Embedding(tgt_vocab_size, d_model)  
-        self.pos_enc = PositionalEncoding(d_model, dropout)
+        self.tgt_embed = nn.Embedding(tgt_vocab_size, d_model) 
+        self.use_pe = use_positional_encoding
+        if self.use_pe:
+            self.pos_enc = PositionalEncoding(d_model, dropout)
+        else:
+            self.pos_embed = nn.Embedding(5000, d_model)
+        
         encoder_layer = EncoderLayer(d_model, num_heads, d_ff, dropout,use_scaling)
         decoder_layer = DecoderLayer(d_model, num_heads, d_ff, dropout, use_scaling)
 
@@ -522,9 +528,12 @@ class Transformer(nn.Module):
             memory : Encoder output, shape [batch, src_len, d_model]
         """
         x = self.src_embed(src) * math.sqrt(self.d_model)
-
-        # Add positional encoding
-        x = self.pos_enc(x)
+        x = self.src_embed(src) * math.sqrt(self.d_model)
+        if self.use_pe:
+            x = self.pos_enc(x)
+        else:
+            positions = torch.arange(0, x.size(1)).unsqueeze(0).to(x.device)
+            x = x + self.pos_embed(positions)
 
         # Pass through encoder stack
         memory = self.encoder(x, src_mask)
@@ -551,7 +560,14 @@ class Transformer(nn.Module):
             logits : shape [batch, tgt_len, tgt_vocab_size]
         """
         x = self.tgt_embed(tgt) * math.sqrt(self.d_model)
-        x = self.pos_enc(x)
+        x = self.tgt_embed(tgt) * math.sqrt(self.d_model)
+      
+        if self.use_pe:
+            x = self.pos_enc(x)
+        else:
+            positions = torch.arange(0, x.size(1)).unsqueeze(0).to(x.device)
+            x = x + self.pos_embed(positions)
+          
         x = self.decoder(x, memory, src_mask, tgt_mask)
         logits = self.fc_out(x)
         return logits
