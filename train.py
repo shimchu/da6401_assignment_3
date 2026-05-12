@@ -528,7 +528,7 @@ def run_training_experiment(config = {
       
     for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
-        train_loss, train_conf = run_epoch(
+        train_loss, train_conf,step  = run_epoch(
             train_loader,
             model,
             loss_fn,
@@ -540,7 +540,7 @@ def run_training_experiment(config = {
           step = step
         )
 
-        val_loss,val_conf = run_epoch(
+        val_loss,val_conf,_ = run_epoch(
             val_loader,
             model,
             loss_fn,
@@ -563,9 +563,8 @@ def run_training_experiment(config = {
           "lr": optimizer.param_groups[0]["lr"],
           "train_conf": train_conf,
           "val_conf": val_conf
-})
+      })
           
-        })
 
         
     ckpt = torch.load("best_model.pth", map_location=device)
