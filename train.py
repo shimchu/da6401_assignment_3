@@ -111,10 +111,9 @@ def run_epoch(
 
     """
     total_loss = 0
-    step = 0
     model.train() if is_train else model.eval()
     loop = tqdm(data_iter, desc="Train" if is_train else "Val", leave=False)
-
+    
     for src, tgt in loop:
         src = src.to(device)
         tgt = tgt.to(device)
@@ -133,10 +132,8 @@ def run_epoch(
         probs = torch.softmax(logits, dim=-1)
         # probability of most confident prediction
         max_prob = probs.max(dim=-1)[0].mean().item()
-        
-        wandb.log({
-            "confidence": max_prob
-        })
+        total_conf += max_prob
+
         
         if is_train:
             optimizer.zero_grad()
@@ -157,6 +154,7 @@ def run_epoch(
             
 
         total_loss += loss.item()
+    avg_conf = total_conf / len(data_iter)
 
     return total_loss / len(data_iter)
 
@@ -433,7 +431,7 @@ def run_training_experiment(config = {
     #     "use_label_smoothing": True,
     #     "use_positional_encoding": True
     # }
-    run_name = f"noam_{config['use_noam']}_scale_{config['use_scaling']}_ls_{config['use_label_smoothing']}"
+    run_name = f"noam_{config['use_noam']}_scale_{config['use_scaling']}_pe_{config['use_positional_encoding']}_ls_{config['use_label_smoothing']}"
     wandb.init(
         project="da6401-a3",
         config=config,
@@ -526,7 +524,7 @@ def run_training_experiment(config = {
       loss_fn = nn.CrossEntropyLoss(ignore_index=pad_idx)
 
     best_val_loss = float("inf")
-
+    step = 0
     for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
         train_loss = run_epoch(
@@ -560,11 +558,11 @@ def run_training_experiment(config = {
             "train_loss": train_loss,
             "val_loss": val_loss,
           "lr": optimizer.param_groups[0]["lr"],
-          
+          "confidence": avg_conf
           
         })
 
-        save_checkpoint(model, optimizer, scheduler, epoch)
+        
     ckpt = torch.load("best_model.pth", map_location=device)
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()
