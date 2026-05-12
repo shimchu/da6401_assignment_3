@@ -61,7 +61,6 @@ def scaled_dot_product_attention(
         scores = scores.masked_fill(mask, -1e9)
     attn_w = F.softmax(scores, dim=-1)    #dim = -1 helps apply along rows
     attn_w = torch.nan_to_num(attn_w, nan=0.0)
-    self.attn_weights = attn_w
     output = torch.matmul(attn_w, V)
     return output, attn_w
     
@@ -184,7 +183,7 @@ class MultiHeadAttention(nn.Module):
         
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
-        
+        self.attn_weights = attn_weights  
         attn_output = torch.matmul(attn_weights, V)
       
         attn_output = self.dropout(attn_output)
@@ -530,7 +529,6 @@ class Transformer(nn.Module):
         Returns:
             memory : Encoder output, shape [batch, src_len, d_model]
         """
-        x = self.src_embed(src) * math.sqrt(self.d_model)
         x = self.src_embed(src) * math.sqrt(self.d_model)
         if self.use_pe:
             x = self.pos_enc(x)
