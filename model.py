@@ -61,7 +61,7 @@ def scaled_dot_product_attention(
         scores = scores.masked_fill(mask, -1e9)
     attn_w = F.softmax(scores, dim=-1)    #dim = -1 helps apply along rows
     attn_w = torch.nan_to_num(attn_w, nan=0.0)
-
+    self.attn_weights = attn_w
     output = torch.matmul(attn_w, V)
     return output, attn_w
     
