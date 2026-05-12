@@ -133,7 +133,7 @@ class MultiHeadAttention(nn.Module):
         dropout   (float): Dropout probability applied to attention weights.
     """
 
-    def __init__(self, d_model: int, num_heads: int, dropout: float = 0.1) -> None:
+    def __init__(self, d_model: int, num_heads: int, dropout: float = 0.1, use_scaling: bool = True) -> None:
         super().__init__()
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
         self.d_model   = d_model
@@ -144,6 +144,7 @@ class MultiHeadAttention(nn.Module):
         self.W_v = nn.Linear(d_model, d_model)
         self.W_o = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(dropout)
+        self.use_scaling = use_scaling
     
     def forward(
         self,
@@ -173,7 +174,19 @@ class MultiHeadAttention(nn.Module):
         Q = Q.view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
         K = K.view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
         V = V.view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
-        attn_output, attn_weights = scaled_dot_product_attention(Q, K, V, mask)
+        scores = torch.matmul(Q, K.transpose(-2, -1))
+
+        if self.use_scaling:
+            scores = scores / math.sqrt(self.d_k)
+        
+        if mask is not None:
+            scores = scores.masked_fill(mask, -1e9)
+        
+        attn_weights = F.softmax(scores, dim=-1)
+        attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
+        
+        attn_output = torch.matmul(attn_weights, V)
+      
         attn_output = self.dropout(attn_output)
         attn_output = attn_output.transpose(1, 2).contiguous()    #tranpose is required so that we dont mix different tokend from differen theads
         attn_output = attn_output.view(batch_size, -1, self.d_model)  
@@ -290,9 +303,9 @@ class EncoderLayer(nn.Module):
         dropout   (float): Dropout probability.
     """
 
-    def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float = 0.1) -> None:
+    def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float = 0.1, use_scaling = True) -> None:
         super().__init__()
-        self.self_attn = MultiHeadAttention(d_model, num_heads, dropout)
+        self.self_attn = MultiHeadAttention(d_model, num_heads, dropout,use_scaling)
         self.ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
 
         self.norm1 = nn.LayerNorm(d_model)
@@ -335,10 +348,10 @@ class DecoderLayer(nn.Module):
         dropout   (float): Dropout probability.
     """
 
-    def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float = 0.1) -> None:
+    def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float = 0.1, use_scaling = True) -> None:
         super().__init__()
-        self.self_attn = MultiHeadAttention(d_model, num_heads, dropout)
-        self.cross_attn = MultiHeadAttention(d_model, num_heads, dropout)
+        self.self_attn = MultiHeadAttention(d_model, num_heads, dropout,use_scaling)
+        self.cross_attn = MultiHeadAttention(d_model, num_heads, dropout, use_scaling)
         self.ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
 
         self.norm1 = nn.LayerNorm(d_model)
@@ -457,6 +470,7 @@ class Transformer(nn.Module):
         d_ff:      int   = 2048,
         dropout:   float = 0.1,
         checkpoint_path: str = None,
+        use_scaling = True
     ) -> None:
         super().__init__()
         # TODO: Instantiate 
@@ -466,8 +480,8 @@ class Transformer(nn.Module):
         self.src_embed = nn.Embedding(src_vocab_size, d_model)
         self.tgt_embed = nn.Embedding(tgt_vocab_size, d_model)  
         self.pos_enc = PositionalEncoding(d_model, dropout)
-        encoder_layer = EncoderLayer(d_model, num_heads, d_ff, dropout)
-        decoder_layer = DecoderLayer(d_model, num_heads, d_ff, dropout)
+        encoder_layer = EncoderLayer(d_model, num_heads, d_ff, dropout,use_scaling)
+        decoder_layer = DecoderLayer(d_model, num_heads, d_ff, dropout, use_scaling)
 
         self.encoder = Encoder(encoder_layer, N)
         self.decoder = Decoder(decoder_layer, N)
