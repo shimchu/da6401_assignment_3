@@ -407,7 +407,7 @@ def run_training_experiment() -> None:
         "batch_size": 32,
         "epochs": 10,
         "warmup_steps": 4000,
-        "use_noam": True,
+        "use_noam": False,
         "use_scaling": True,
         "use_label_smoothing": True,
         "use_positional_encoding": True
