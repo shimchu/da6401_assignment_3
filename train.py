@@ -471,7 +471,8 @@ def run_training_experiment() -> None:
         N=config["N"],
         num_heads=config["num_heads"],
         d_ff=config["d_ff"],
-        dropout=config["dropout"]
+        dropout=config["dropout"],
+      use_scaling=config["use_scaling"]
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
