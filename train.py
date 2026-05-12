@@ -496,7 +496,8 @@ def run_training_experiment(config = {
         num_heads=config["num_heads"],
         d_ff=config["d_ff"],
         dropout=config["dropout"],
-      use_scaling=config["use_scaling"]
+      use_scaling=config["use_scaling"],
+      use_positional_encoding=config["use_positional_encoding"]
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
