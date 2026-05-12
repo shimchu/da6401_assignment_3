@@ -111,6 +111,7 @@ def run_epoch(
 
     """
     total_loss = 0
+    step = 0
     model.train() if is_train else model.eval()
     loop = tqdm(data_iter, desc="Train" if is_train else "Val", leave=False)
 
@@ -132,10 +133,20 @@ def run_epoch(
         if is_train:
             optimizer.zero_grad()
             loss.backward()
+            step += 1
+            if step <= 1000:
+              for name, param in model.named_parameters():
+                  if param.grad is not None:
+                      if "w_q" in name.lower() or "w_k" in name.lower():
+                          wandb.log({
+                              f"grad_norm/{name}": param.grad.norm().item(),
+                              "step": step
+                          })
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             if scheduler is not None:
                 scheduler.step()
+            
 
         total_loss += loss.item()
 
