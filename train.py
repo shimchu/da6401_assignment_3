@@ -122,8 +122,8 @@ def run_epoch(
         tgt_input = tgt[:, :-1]
         tgt_output = tgt[:, 1:]
 
-        src_mask = make_src_mask(src)
-        tgt_mask = make_tgt_mask(tgt_input)
+        src_mask = make_src_mask(src).to(device)
+        tgt_mask = make_tgt_mask(tgt_input).to(device)
 
         logits = model(src, tgt_input, src_mask, tgt_mask)
         loss = loss_fn(
@@ -331,7 +331,7 @@ def save_checkpoint(
         "N": model.N,
         "num_heads": model.num_heads,
         "d_ff": model.d_ff,
-        "dropout": model.dropout  
+        "dropout": model.dropout.p 
     }
     }, path)
 
