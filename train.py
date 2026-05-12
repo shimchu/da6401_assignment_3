@@ -476,7 +476,7 @@ def run_training_experiment() -> None:
         smoothing=0.1
     )
 
-    for epoch in range(config["epochs"])):
+    for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
         train_loss = run_epoch(
             train_loader,
