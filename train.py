@@ -92,6 +92,7 @@ def run_epoch(
     epoch_num: int = 0,
     is_train: bool = True,
     device: str = "cpu",
+    step = 0
 ) -> float:
     """
     Run one epoch of training or evaluation.
@@ -113,7 +114,7 @@ def run_epoch(
     total_loss = 0
     model.train() if is_train else model.eval()
     loop = tqdm(data_iter, desc="Train" if is_train else "Val", leave=False)
-    
+    total_conf = 0
     for src, tgt in loop:
         src = src.to(device)
         tgt = tgt.to(device)
@@ -156,7 +157,7 @@ def run_epoch(
         total_loss += loss.item()
     avg_conf = total_conf / len(data_iter)
 
-    return total_loss / len(data_iter)
+    return total_loss / len(data_iter), avg_conf, step
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -535,7 +536,8 @@ def run_training_experiment(config = {
             scheduler,
             epoch,
             is_train=True,
-            device=device
+            device=device,
+          step = step
         )
 
         val_loss = run_epoch(
@@ -546,7 +548,8 @@ def run_training_experiment(config = {
             None,
             epoch,
             is_train=False,
-            device=device
+            device=device,
+          step = step
         )
         if val_loss < best_val_loss:
             best_val_loss = val_loss
