@@ -395,10 +395,18 @@ def run_training_experiment() -> None:
         "dropout": 0.1,
         "batch_size": 32,
         "epochs": 10,
-        "warmup_steps": 4000
+        "warmup_steps": 4000,
+        "use_noam": True,
+        "use_scaling": True,
+        "use_label_smoothing": True,
+        "use_positional_encoding": True
     }
-
-    wandb.init(project="da6401-a3", config=config)
+    run_name = f"noam_{config['use_noam']}_scale_{config['use_scaling']}_ls_{config['use_label_smoothing']}"
+    wandb.init(
+        project="da6401-a3",
+        config=config,
+        name=run_name
+    )
 
     train_data = Multi30kDataset(split="train")
     val_data = Multi30kDataset(split="validation")
@@ -467,12 +475,16 @@ def run_training_experiment() -> None:
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
-
-    scheduler = NoamScheduler(
-        optimizer,
-        d_model=config["d_model"],
-        warmup_steps=config["warmup_steps"]
+    if config["use_noam"]:
+      scheduler = NoamScheduler(
+      optimizer,
+      d_model=config["d_model"],
+      warmup_steps=config["warmup_steps"]
     )
+    
+    else:
+      scheduler = None
+      optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
     loss_fn = LabelSmoothingLoss(
         vocab_size=len(train_data.tgt_vocab),
@@ -512,7 +524,10 @@ def run_training_experiment() -> None:
         wandb.log({
             "epoch": epoch,
             "train_loss": train_loss,
-            "val_loss": val_loss
+            "val_loss": val_loss,
+          "lr": optimizer.param_groups[0]["lr"],
+          
+          
         })
 
         save_checkpoint(model, optimizer, scheduler, epoch)
