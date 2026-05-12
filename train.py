@@ -72,6 +72,8 @@ class LabelSmoothingLoss(nn.Module):
             true_dist[mask] = 0
 
         loss = torch.sum(-true_dist * log_probs, dim=1)
+        print("log_probs nan:", torch.isnan(log_probs).any())
+        print("loss nan:", torch.isnan(loss))
         return loss.mean()
         
 
