@@ -72,9 +72,6 @@ class LabelSmoothingLoss(nn.Module):
             true_dist[mask] = 0
 
         loss = torch.sum(-true_dist * log_probs, dim=1)
-        print("log_probs nan:", torch.isnan(log_probs).any())
-        print("loss nan:", torch.isnan(loss))
-
         non_pad_mask = target != self.pad_idx
         loss = loss[non_pad_mask]
 
@@ -128,12 +125,10 @@ def run_epoch(
         tgt_mask = make_tgt_mask(tgt_input)
 
         logits = model(src, tgt_input, src_mask, tgt_mask)
-        print("logits nan:", torch.isnan(logits).any())
         loss = loss_fn(
             logits.reshape(-1, logits.size(-1)),
             tgt_output.reshape(-1)
         )
-        print("loss nan:", torch.isnan(loss))
         if is_train:
             optimizer.zero_grad()
             loss.backward()
