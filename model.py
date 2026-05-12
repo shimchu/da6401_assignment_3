@@ -75,7 +75,7 @@ def scaled_dot_product_attention(
 
 def make_src_mask(
     src: torch.Tensor,
-    pad_idx: int = 1,
+    pad_idx: int = 0,
 ) -> torch.Tensor:
     """
     Build a padding mask for the encoder (source sequence).
@@ -94,7 +94,7 @@ def make_src_mask(
 
 def make_tgt_mask(
     tgt: torch.Tensor,
-    pad_idx: int = 1,
+    pad_idx: int = 0,
 ) -> torch.Tensor:
     """
     Build a combined padding + causal (look-ahead) mask for the decoder.
