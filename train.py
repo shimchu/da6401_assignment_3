@@ -152,9 +152,8 @@ def run_epoch(
             optimizer.step()
             if scheduler is not None:
                 scheduler.step()
-            
-
         total_loss += loss.item()
+      
     avg_conf = total_conf / len(data_iter)
 
     return total_loss / len(data_iter), avg_conf, step
@@ -526,9 +525,10 @@ def run_training_experiment(config = {
 
     best_val_loss = float("inf")
     step = 0
+      
     for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
-        train_loss = run_epoch(
+        train_loss, train_conf = run_epoch(
             train_loader,
             model,
             loss_fn,
@@ -540,7 +540,7 @@ def run_training_experiment(config = {
           step = step
         )
 
-        val_loss = run_epoch(
+        val_loss,val_conf = run_epoch(
             val_loader,
             model,
             loss_fn,
@@ -557,11 +557,13 @@ def run_training_experiment(config = {
         print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}")
 
         wandb.log({
-            "epoch": epoch,
+            "epoch": epoch + 1,
             "train_loss": train_loss,
             "val_loss": val_loss,
           "lr": optimizer.param_groups[0]["lr"],
-          "confidence": avg_conf
+          "train_conf": train_conf,
+          "val_conf": val_conf
+})
           
         })
 
