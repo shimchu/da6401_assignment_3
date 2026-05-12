@@ -504,7 +504,10 @@ class Transformer(nn.Module):
         }
 
         self.src_tokenizer = spacy.load("de_core_news_sm")
-        self.tgt_tokenizer = spacy.load("en_core_web_sm")        
+        self.tgt_tokenizer = spacy.load("en_core_web_sm")
+        self.N = N
+        self.num_heads = num_heads
+        self.d_ff = d_ff
         if checkpoint_path is not None:
             gdown.download(id="<.pth drive id>", output=checkpoint_path, quiet=False)
             self.load_state_dict(torch.load(checkpoint_path))
