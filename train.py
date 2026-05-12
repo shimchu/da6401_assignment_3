@@ -366,7 +366,20 @@ def load_checkpoint(
 #   EXPERIMENT ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════
 
-def run_training_experiment() -> None:
+def run_training_experiment(config = {
+        "d_model": 512,
+        "N": 6,
+        "num_heads": 8,
+        "d_ff": 2048,
+        "dropout": 0.1,
+        "batch_size": 32,
+        "epochs": 10,
+        "warmup_steps": 4000,
+        "use_noam": True,
+        "use_scaling": True,
+        "use_label_smoothing": True,
+        "use_positional_encoding": True
+    }) -> None:
     """
     Set up and run the full training experiment.
 
@@ -398,20 +411,20 @@ def run_training_experiment() -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    config = {
-        "d_model": 512,
-        "N": 6,
-        "num_heads": 8,
-        "d_ff": 2048,
-        "dropout": 0.1,
-        "batch_size": 32,
-        "epochs": 10,
-        "warmup_steps": 4000,
-        "use_noam": True,
-        "use_scaling": True,
-        "use_label_smoothing": True,
-        "use_positional_encoding": True
-    }
+    # config = {
+    #     "d_model": 512,
+    #     "N": 6,
+    #     "num_heads": 8,
+    #     "d_ff": 2048,
+    #     "dropout": 0.1,
+    #     "batch_size": 32,
+    #     "epochs": 10,
+    #     "warmup_steps": 4000,
+    #     "use_noam": True,
+    #     "use_scaling": True,
+    #     "use_label_smoothing": True,
+    #     "use_positional_encoding": True
+    # }
     run_name = f"noam_{config['use_noam']}_scale_{config['use_scaling']}_ls_{config['use_label_smoothing']}"
     wandb.init(
         project="da6401-a3",
