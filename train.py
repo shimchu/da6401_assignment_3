@@ -130,6 +130,14 @@ def run_epoch(
             logits.reshape(-1, logits.size(-1)),
             tgt_output.reshape(-1)
         )
+        probs = torch.softmax(logits, dim=-1)
+        # probability of most confident prediction
+        max_prob = probs.max(dim=-1)[0].mean().item()
+        
+        wandb.log({
+            "confidence": max_prob
+        })
+        
         if is_train:
             optimizer.zero_grad()
             loss.backward()
@@ -511,12 +519,12 @@ def run_training_experiment(config = {
     else:
       scheduler = None
       optimizer = optim.Adam(model.parameters(), lr=1e-4)
+      
+    if config["use_label_smoothing"]:
+      loss_fn = LabelSmoothingLoss(vocab_size =len(train_data.tgt_vocab), pad_idx=pad_idx, smoothing=0.1)
+    else:
+      loss_fn = nn.CrossEntropyLoss(ignore_index=pad_idx)
 
-    loss_fn = LabelSmoothingLoss(
-        vocab_size=len(train_data.tgt_vocab),
-        pad_idx=pad_idx,
-        smoothing=0.1
-    )
     best_val_loss = float("inf")
 
     for epoch in range(config["epochs"]):
