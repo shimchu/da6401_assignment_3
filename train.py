@@ -122,7 +122,8 @@ def run_epoch(
         tgt_mask = make_tgt_mask(tgt_input)
 
         logits = model(src, tgt_input, src_mask, tgt_mask)
-
+        print("logits nan:", torch.isnan(logits).any())
+        print("loss nan:", torch.isnan(loss))
         loss = loss_fn(
             logits.reshape(-1, logits.size(-1)),
             tgt_output.reshape(-1)
