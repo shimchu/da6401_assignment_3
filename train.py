@@ -384,7 +384,8 @@ def run_training_experiment(config = {
         "use_noam": True,
         "use_scaling": True,
         "use_label_smoothing": True,
-        "use_positional_encoding": True
+        "use_positional_encoding": True,
+  "name"= "experiment" 
     }) -> None:
     """
     Set up and run the full training experiment.
@@ -435,7 +436,7 @@ def run_training_experiment(config = {
     wandb.init(
         project="da6401-a3",
         config=config,
-        name=run_name
+        name= config["name"]
     )
 
     train_data = Multi30kDataset(split="train")
