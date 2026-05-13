@@ -385,7 +385,7 @@ def run_training_experiment(config = {
         "use_scaling": True,
         "use_label_smoothing": True,
         "use_positional_encoding": True,
-  "name"= "experiment" 
+  "name": "experiment" 
     }) -> None:
     """
     Set up and run the full training experiment.
