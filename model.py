@@ -518,11 +518,12 @@ class Transformer(nn.Module):
             "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
         }
       
+      
         if checkpoint_path is not None:
           self.load_state_dict(ckpt["model_state_dict"])
           self.src_vocab = ckpt["src_vocab"]
           self.tgt_vocab = ckpt["tgt_vocab"]
-
+        print("Loaded vocab size:", len(self.src_vocab) if self.src_vocab else None)
 
            
 
