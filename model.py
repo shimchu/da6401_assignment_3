@@ -611,8 +611,8 @@ class Transformer(nn.Module):
         device = next(self.parameters()).device
 
         # tokenize using spacy
-        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
-
+        #tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+        tokens = sentence.lower().split()
         # convert to indices
         src_tokens = [self.src_vocab["<sos>"]] + [
             self.src_vocab.get(tok, self.src_vocab["<unk>"])
