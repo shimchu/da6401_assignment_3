@@ -517,7 +517,7 @@ class Transformer(nn.Module):
             self.src_vocab = ckpt["src_vocab"]
             self.tgt_vocab = ckpt["tgt_vocab"]
             self.src_vocab_size = ckpt["src_vocab_size"]
-            self.tgt_vocab_size = skpt["tgt_vocab_size"]
+            self.tgt_vocab_size = ckpt["tgt_vocab_size"]
            
 
 
