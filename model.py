@@ -475,6 +475,19 @@ class Transformer(nn.Module):
         super().__init__()
         # TODO: Instantiate 
         # init should also load the model weights if checkpoint path provided, download the .pth file like this
+      
+        if checkpoint_path is not None:
+            if not os.path.exists(checkpoint_path):
+                gdown.download(id="1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE", output=checkpoint_path, quiet=True)
+        
+            ckpt = torch.load(checkpoint_path, map_location="cpu")
+            config = ckpt["model_config"]
+            src_vocab_size = config["src_vocab_size"]
+            tgt_vocab_size = config["tgt_vocab_size"]
+            d_model = config["d_model"]
+            N = config["N"]
+            num_heads = config["num_heads"]
+            d_ff = config["d_ff"]
 
         self.d_model = d_model
         self.src_embed = nn.Embedding(src_vocab_size, d_model)
@@ -504,20 +517,13 @@ class Transformer(nn.Module):
         self.tgt_vocab = {
             "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
         }
-        
-
-
+      
         if checkpoint_path is not None:
-            if not os.path.exists(checkpoint_path):
-                gdown.download(id="1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE", output=checkpoint_path, quiet=True)
-        
-            ckpt = torch.load(checkpoint_path, map_location="cpu")
-        
-            self.load_state_dict(ckpt["model_state_dict"])
-            self.src_vocab = ckpt["src_vocab"]
-            self.tgt_vocab = ckpt["tgt_vocab"]
-            self.src_vocab_size = ckpt["src_vocab_size"]
-            self.tgt_vocab_size = ckpt["tgt_vocab_size"]
+          self.load_state_dict(ckpt["model_state_dict"])
+          self.src_vocab = ckpt["src_vocab"]
+          self.tgt_vocab = ckpt["tgt_vocab"]
+
+
            
 
 
