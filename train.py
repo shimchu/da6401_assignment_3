@@ -561,7 +561,7 @@ def run_training_experiment(config = {
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             save_checkpoint(model, optimizer, scheduler, epoch, path="best_model.pth")
-        print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}")
+        print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}|Val BLEU: {val_bleu:.2f}")
 
         wandb.log({
             "epoch": epoch + 1,
