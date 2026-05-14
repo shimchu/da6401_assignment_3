@@ -495,21 +495,22 @@ class Transformer(nn.Module):
         self.fc_out = nn.Linear(d_model, tgt_vocab_size)
 
         self.dropout = nn.Dropout(dropout)
-        self.src_vocab = {
-            "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
-        }
-        self.tgt_vocab = {
-            "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
-        }
-
-        self.src_tokenizer = spacy.load("de_core_news_sm")
-        self.tgt_tokenizer = spacy.load("en_core_web_sm")
         self.N = N
         self.num_heads = num_heads
         self.d_ff = d_ff
-        if checkpoint_path is not None:
-            gdown.download(id="<.pth drive id>", output=checkpoint_path, quiet=False)
-            self.load_state_dict(torch.load(checkpoint_path))
+        self.src_vocab = {
+    "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
+}
+        self.tgt_vocab = {
+            "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
+        }
+        
+        if os.path.exists("best_model.pth"):
+            ckpt = torch.load("best_model.pth", map_location="cpu")
+            self.load_state_dict(ckpt["model_state_dict"])
+            self.src_vocab = ckpt["src_vocab"]
+            self.tgt_vocab = ckpt["tgt_vocab"]
+           
 
 
     # ── AUTOGRADER HOOKS ── keep these signatures exactly ─────────────
@@ -612,7 +613,7 @@ class Transformer(nn.Module):
 
         # tokenize using spacy
         #tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
-        tokens = sentence.lower().split()
+        tokens = src_sentence.lower().split()
         # convert to indices
         src_tokens = [self.src_vocab["<sos>"]] + [
             self.src_vocab.get(tok, self.src_vocab["<unk>"])
