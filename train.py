@@ -552,6 +552,12 @@ def run_training_experiment(config = {
             device=device,
           step = step
         )
+        val_bleu = evaluate_bleu(
+        model,
+        val_loader,               
+        train_data.tgt_vocab,
+        device=device
+    )
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             save_checkpoint(model, optimizer, scheduler, epoch, path="best_model.pth")
@@ -563,7 +569,9 @@ def run_training_experiment(config = {
             "val_loss": val_loss,
           "lr": optimizer.param_groups[0]["lr"],
           "train_conf": train_conf,
-          "val_conf": val_conf
+          "val_conf": val_conf,
+          "val_bleu": val_bleu
+          
       })
           
 
