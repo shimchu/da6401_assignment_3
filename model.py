@@ -468,7 +468,7 @@ class Transformer(nn.Module):
         num_heads: int   = 8,
         d_ff:      int   = 2048,
         dropout:   float = 0.1,
-        checkpoint_path: str = None,
+        checkpoint_path: str = "best_model.pth",
         use_scaling = True,
         use_positional_encoding=True
     ) -> None:
@@ -505,8 +505,14 @@ class Transformer(nn.Module):
             "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
         }
         
-        if os.path.exists("best_model.pth"):
-            ckpt = torch.load("best_model.pth", map_location="cpu")
+
+
+        if checkpoint_path is not None:
+            if not os.path.exists(checkpoint_path):
+                gdown.download(id="1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE", output=checkpoint_path, quiet=True)
+        
+            ckpt = torch.load(checkpoint_path, map_location="cpu")
+        
             self.load_state_dict(ckpt["model_state_dict"])
             self.src_vocab = ckpt["src_vocab"]
             self.tgt_vocab = ckpt["tgt_vocab"]
