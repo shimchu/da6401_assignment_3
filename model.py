@@ -516,6 +516,8 @@ class Transformer(nn.Module):
             self.load_state_dict(ckpt["model_state_dict"])
             self.src_vocab = ckpt["src_vocab"]
             self.tgt_vocab = ckpt["tgt_vocab"]
+            self.src_vocab_size = ckpt["src_vocab_size"]
+            self.tgt_vocab_size = skpt["tgt_vocab_size"]
            
 
 
