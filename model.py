@@ -461,34 +461,24 @@ class Transformer(nn.Module):
 
     def __init__(
         self,
-        src_vocab_size: int = 10000,
-        tgt_vocab_size: int= 10000,
+        src_vocab_size: int,
+        tgt_vocab_size: int,
         d_model:   int   = 512,
         N:         int   = 6,
         num_heads: int   = 8,
         d_ff:      int   = 2048,
         dropout:   float = 0.1,
-        checkpoint_path: str = "best_model.pth",
         use_scaling = True,
         use_positional_encoding=True
     ) -> None:
         super().__init__()
         # TODO: Instantiate 
         # init should also load the model weights if checkpoint path provided, download the .pth file like this
-      
-        if checkpoint_path is not None:
-            if not os.path.exists(checkpoint_path):
-                gdown.download(id="1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE", output=checkpoint_path, quiet=True)
-        
-            ckpt = torch.load(checkpoint_path, map_location="cpu")
-            config = ckpt["model_config"]
-            src_vocab_size = config["src_vocab_size"]
-            tgt_vocab_size = config["tgt_vocab_size"]
-            d_model = config["d_model"]
-            N = config["N"]
-            num_heads = config["num_heads"]
-            d_ff = config["d_ff"]
-
+        if src_vocab_size is None or tgt_vocab_size is None:
+          base_dir = os.path.dirname(os.path.abspath(__file__))
+          vocab = torch.load(os.path.join(base_dir, "vocab.pt"), weights_only=False)
+          src_vocab_size = src_vocab_size or len(vocab["src_vocab"])
+          tgt_vocab_size = tgt_vocab_size or len(vocab["tgt_vocab"])
         self.d_model = d_model
         self.src_embed = nn.Embedding(src_vocab_size, d_model)
         self.tgt_embed = nn.Embedding(tgt_vocab_size, d_model) 
@@ -504,26 +494,25 @@ class Transformer(nn.Module):
         self.encoder = Encoder(encoder_layer, N)
         self.decoder = Decoder(decoder_layer, N)
 
-    
         self.fc_out = nn.Linear(d_model, tgt_vocab_size)
-
         self.dropout = nn.Dropout(dropout)
         self.N = N
         self.num_heads = num_heads
         self.d_ff = d_ff
+      
         self.src_vocab = {
     "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
 }
         self.tgt_vocab = {
             "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
         }
+        self.src_tokenizer = None
       
-      
-        if checkpoint_path is not None:
-          self.load_state_dict(ckpt["model_state_dict"])
-          self.src_vocab = ckpt["src_vocab"]
-          self.tgt_vocab = ckpt["tgt_vocab"]
-        print("Loaded vocab size:", len(self.src_vocab) if self.src_vocab else None)
+        # if checkpoint_path is not None:
+        #   self.load_state_dict(ckpt["model_state_dict"])
+        #   self.src_vocab = ckpt["src_vocab"]
+        #   self.tgt_vocab = ckpt["tgt_vocab"]
+        # print("Loaded vocab size:", len(self.src_vocab) if self.src_vocab else None)
 
            
 
@@ -625,42 +614,50 @@ class Transformer(nn.Module):
             """
         self.eval()
         device = next(self.parameters()).device
+    
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+        # load vocab if not already populated
+        if len(self.src_vocab) <= 4:
+            vocab = torch.load(os.path.join(base_dir, "vocab.pt"), weights_only=False)
+            self.src_vocab = vocab["src_vocab"]
+            self.tgt_vocab = vocab["tgt_vocab"]
+          
 
-        # tokenize using spacy
-        #tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
-        tokens = src_sentence.lower().split()
-        # convert to indices
-        src_tokens = [self.src_vocab["<sos>"]] + [
-            self.src_vocab.get(tok, self.src_vocab["<unk>"])
-            for tok in tokens
-        ] + [self.src_vocab["<eos>"]]
-
+    
+        # load tokenizer if not already loaded
+        if self.src_tokenizer is None:
+            self.src_tokenizer = torch.load(
+                os.path.join(base_dir, "tokenizer.pt"), weights_only=False
+            )
+    
+        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+    
+        src_tokens = (
+            [self.src_vocab["<sos>"]]
+            + [self.src_vocab.get(tok, self.src_vocab["<unk>"]) for tok in tokens]
+            + [self.src_vocab["<eos>"]]
+        )
+    
         src = torch.tensor(src_tokens).unsqueeze(0).to(device)
-
         src_mask = make_src_mask(src).to(device)
         memory = self.encode(src, src_mask)
-
+    
         tgt_tokens = [self.tgt_vocab["<sos>"]]
-
         for _ in range(max_len):
             tgt = torch.tensor(tgt_tokens).unsqueeze(0).to(device)
             tgt_mask = make_tgt_mask(tgt).to(device)
-
             logits = self.decode(memory, src_mask, tgt, tgt_mask)
             next_token = logits[:, -1, :].argmax(dim=-1).item()
-
             tgt_tokens.append(next_token)
-
             if next_token == self.tgt_vocab["<eos>"]:
                 break
-
-        # convert back to words
+    
         itos = {v: k for k, v in self.tgt_vocab.items()}
-
         output_tokens = []
         for tok in tgt_tokens[1:]:
             if tok == self.tgt_vocab["<eos>"]:
                 break
             output_tokens.append(itos.get(tok, "<unk>"))
-
+    
         return " ".join(output_tokens)
