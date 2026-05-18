@@ -323,19 +323,19 @@ def save_checkpoint(
     "epoch": epoch,
     "model_state_dict": model.state_dict(),
     "optimizer_state_dict": optimizer.state_dict(),
-    "src_vocab": model.src_vocab,
-    "tgt_vocab": model.tgt_vocab,
     "scheduler_state_dict": scheduler.state_dict() if scheduler is not None else None,
+    "src_vocab": model.src_vocab, 
+    "tgt_vocab": model.tgt_vocab,   
     "model_config": {
-        "src_vocab_size": model.src_embed.num_embeddings,
-        "tgt_vocab_size": model.tgt_embed.num_embeddings,
-        "d_model": model.d_model,
-        "N": model.N,
-        "num_heads": model.num_heads,
-        "d_ff": model.d_ff,
-        "dropout": model.dropout.p 
-    }
-    }, path)
+      "src_vocab_size": model.src_embed.num_embeddings,
+      "tgt_vocab_size": model.tgt_embed.num_embeddings,
+      "d_model": model.d_model,
+      "N": model.N,
+      "num_heads": model.num_heads,
+      "d_ff": model.d_ff,
+      "dropout": model.dropout.p 
+  }
+  }, path)
 
 
 def load_checkpoint(
@@ -360,7 +360,8 @@ def load_checkpoint(
     # TODO: implement restore logic
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint["model_state_dict"])
-
+    model.src_vocab = checkpoint["src_vocab"]   # ← add this
+    model.tgt_vocab = checkpoint["tgt_vocab"]   # ← add this
     if optimizer is not None:
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
@@ -450,7 +451,12 @@ def run_training_experiment(config = {
     val_data.tgt_vocab = train_data.tgt_vocab
     test_data.src_vocab = train_data.src_vocab
     test_data.tgt_vocab = train_data.tgt_vocab
-
+    
+    
+    torch.save(train_data.src_tokenizer, "tokenizer.pt")
+    torch.save({"src_vocab": train_data.src_vocab, 
+                "tgt_vocab": train_data.tgt_vocab}, "vocab.pt")
+      
     print("Starting dataset processing...")
     train_src, train_tgt = train_data.process_data()
     
@@ -508,7 +514,8 @@ def run_training_experiment(config = {
       use_scaling=config["use_scaling"],
       use_positional_encoding=config["use_positional_encoding"]
     ).to(device)
-
+    model.src_vocab = train_data.src_vocab
+    model.tgt_vocab = train_data.tgt_vocab
     optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
     if config["use_noam"]:
       scheduler = NoamScheduler(
