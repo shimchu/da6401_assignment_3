@@ -527,18 +527,12 @@ def run_training_experiment(config = {
       
     model.src_vocab = train_data.src_vocab
     model.tgt_vocab = train_data.tgt_vocab
-      
-    optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
     if config["use_noam"]:
-      scheduler = NoamScheduler(
-      optimizer,
-      d_model=config["d_model"],
-      warmup_steps=config["warmup_steps"]
-    )
-    
+        optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
+        scheduler = NoamScheduler(optimizer, d_model=config["d_model"], warmup_steps=config["warmup_steps"])
     else:
-      scheduler = None
-      optimizer = optim.Adam(model.parameters(), lr=1e-4)
+        optimizer = optim.Adam(model.parameters(), lr=1e-4)
+        scheduler = None
       
     if config["use_label_smoothing"]:
       loss_fn = LabelSmoothingLoss(vocab_size =len(train_data.tgt_vocab), pad_idx=pad_idx, smoothing=0.1)
