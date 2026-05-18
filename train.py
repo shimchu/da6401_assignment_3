@@ -111,6 +111,8 @@ def run_epoch(
         avg_loss : Average loss over the epoch (float).
 
     """
+    total_correct = 0
+    total_tokens = 0
     total_loss = 0
     model.train() if is_train else model.eval()
     loop = tqdm(data_iter, desc="Train" if is_train else "Val", leave=False)
@@ -126,6 +128,13 @@ def run_epoch(
         tgt_mask = make_tgt_mask(tgt_input).to(device)
 
         logits = model(src, tgt_input, src_mask, tgt_mask)
+        preds = logits.reshape(-1, logits.size(-1)).argmax(dim=-1)
+        targets = tgt_output.reshape(-1)
+        non_pad = targets != 0  # pad_idx = 0
+        correct = (preds[non_pad] == targets[non_pad]).sum().item()
+        total = non_pad.sum().item()
+        total_correct += correct
+        total_tokens += total
         loss = loss_fn(
             logits.reshape(-1, logits.size(-1)),
             tgt_output.reshape(-1)
@@ -155,8 +164,9 @@ def run_epoch(
         total_loss += loss.item()
       
     avg_conf = total_conf / len(data_iter)
+    acc = total_correct / total_tokens if total_tokens > 0 else 0.0
 
-    return total_loss / len(data_iter), avg_conf, step
+    return total_loss / len(data_iter), avg_conf, step, acc
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -540,7 +550,7 @@ def run_training_experiment(config = {
       
     for epoch in range(config["epochs"]):
         print(f" Starting Epoch {epoch+1}/{config['epochs']}")
-        train_loss, train_conf,step  = run_epoch(
+        train_loss, train_conf,step,train_acc  = run_epoch(
             train_loader,
             model,
             loss_fn,
@@ -552,7 +562,7 @@ def run_training_experiment(config = {
           step = step
         )
 
-        val_loss,val_conf,_ = run_epoch(
+        val_loss,val_conf,_,val_acc = run_epoch(
             val_loader,
             model,
             loss_fn,
@@ -572,7 +582,7 @@ def run_training_experiment(config = {
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             save_checkpoint(model, optimizer, scheduler, epoch, path="best_model.pth")
-        print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Val Loss: {val_loss:.4f}|Val BLEU: {val_bleu:.2f}")
+        print(f"Epoch {epoch+1}|Train Loss: {train_loss:.4f}| Train Acc: {train_acc:.4f} |Val Loss: {val_loss:.4f}|Val BLEU: {val_bleu:.2f}|Val Acc: {val_acc:.4f} |")
 
         wandb.log({
             "epoch": epoch + 1,
@@ -581,8 +591,9 @@ def run_training_experiment(config = {
           "lr": optimizer.param_groups[0]["lr"],
           "train_conf": train_conf,
           "val_conf": val_conf,
-          "val_bleu": val_bleu
-          
+          "val_bleu": val_bleu,
+          "train_acc": train_acc,
+          "val_acc": val_acc,      
       })
           
 
