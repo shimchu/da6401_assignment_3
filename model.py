@@ -479,6 +479,7 @@ class Transformer(nn.Module):
           vocab = torch.load(os.path.join(base_dir, "vocab.pt"), weights_only=False)
           src_vocab_size = src_vocab_size or len(vocab["src_vocab"])
           tgt_vocab_size = tgt_vocab_size or len(vocab["tgt_vocab"])
+          
         self.d_model = d_model
         self.src_embed = nn.Embedding(src_vocab_size, d_model)
         self.tgt_embed = nn.Embedding(tgt_vocab_size, d_model) 
@@ -630,8 +631,9 @@ class Transformer(nn.Module):
             self.src_tokenizer = torch.load(
                 os.path.join(base_dir, "tokenizer.pt"), weights_only=False
             )
-    
+
         tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+    
     
         src_tokens = (
             [self.src_vocab["<sos>"]]
