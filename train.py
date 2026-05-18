@@ -453,7 +453,7 @@ def run_training_experiment(config = {
     test_data.tgt_vocab = train_data.tgt_vocab
     
     
-    torch.save(train_data.src_tokenizer, "tokenizer.pt")
+    torch.save(train_data.de_tokenizer, "tokenizer.pt")
     torch.save({"src_vocab": train_data.src_vocab, 
                 "tgt_vocab": train_data.tgt_vocab}, "vocab.pt")
       
@@ -514,8 +514,10 @@ def run_training_experiment(config = {
       use_scaling=config["use_scaling"],
       use_positional_encoding=config["use_positional_encoding"]
     ).to(device)
+      
     model.src_vocab = train_data.src_vocab
     model.tgt_vocab = train_data.tgt_vocab
+      
     optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
     if config["use_noam"]:
       scheduler = NoamScheduler(
