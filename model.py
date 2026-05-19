@@ -631,17 +631,14 @@ class Transformer(nn.Module):
             self.tgt_vocab = vocab["tgt_vocab"]
     
         if self.src_tokenizer is None:
-            import pickle
-            with open(os.path.join(base_dir, "tokenizer_light.pkl"), "rb") as f:
-                self.src_tokenizer = pickle.load(f)
+             import re
+              tokens = re.findall(r"\w+|[^\w\s]", src_sentence.lower())
       
         # if self.src_tokenizer is None:
         #   self.src_tokenizer = torch.load(
         #       os.path.join(base_dir, "tokenizer.pt"), weights_only=False
         #   )
-            
-        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
-    
+                
         src_tokens = (
             [self.src_vocab["<sos>"]]
             + [self.src_vocab.get(tok, self.src_vocab["<unk>"]) for tok in tokens]
