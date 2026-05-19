@@ -625,7 +625,7 @@ class Transformer(nn.Module):
     
         if self.src_tokenizer is None:
             import pickle
-            with open(os.path.join(base_dir, "tokenizer.pkl"), "rb") as f:
+            with open(os.path.join(base_dir, "tokenizer_light.pkl"), "rb") as f:
                 self.src_tokenizer = pickle.load(f)
       
         # if self.src_tokenizer is None:
