@@ -647,13 +647,24 @@ class Transformer(nn.Module):
         #         src_tokens.append(self.src_vocab["<unk>"])
         
         # add special tokens
-        src_tokens = [self.src_vocab["<sos>"]] + src_tokens + [self.src_vocab["<eos>"]]
+        #src_tokens = [self.src_vocab["<sos>"]] + src_tokens + [self.src_vocab["<eos>"]]
+
       
         if self.src_tokenizer is None:
-          self.src_tokenizer = torch.load(
-              os.path.join(base_dir, "tokenizer.pt"), weights_only=False
-          )
-        
+          # self.src_tokenizer = torch.load(
+          #     os.path.join(base_dir, "tokenizer.pt"), weights_only=False
+          # )
+          import pickle
+          with open(os.path.join(base_dir, "tokenizer_light.pkl"), "rb") as f:
+            self.src_tokenizer = pickle.load(f)
+        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+        src_tokens = (
+        [self.src_vocab["<sos>"]]
+        + [self.src_vocab.get(tok, self.src_vocab["<unk>"]) for tok in tokens]
+        + [self.src_vocab["<eos>"]]
+         )
+      
+
     
         with torch.no_grad():   # ← critical for speed
             src = torch.tensor(src_tokens).unsqueeze(0).to(device)
