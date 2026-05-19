@@ -618,22 +618,17 @@ class Transformer(nn.Module):
     
         base_dir = os.path.dirname(os.path.abspath(__file__))
     
-        # load vocab if not already populated
         if len(self.src_vocab) <= 4:
             vocab = torch.load(os.path.join(base_dir, "vocab.pt"), weights_only=False)
             self.src_vocab = vocab["src_vocab"]
             self.tgt_vocab = vocab["tgt_vocab"]
-          
-
     
-        # load tokenizer if not already loaded
         if self.src_tokenizer is None:
-            self.src_tokenizer = torch.load(
-                os.path.join(base_dir, "tokenizer.pt"), weights_only=False
-            )
-
-        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+            import pickle
+            with open(os.path.join(base_dir, "tokenizer.pkl"), "rb") as f:
+                self.src_tokenizer = pickle.load(f)
     
+        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
     
         src_tokens = (
             [self.src_vocab["<sos>"]]
@@ -641,19 +636,20 @@ class Transformer(nn.Module):
             + [self.src_vocab["<eos>"]]
         )
     
-        src = torch.tensor(src_tokens).unsqueeze(0).to(device)
-        src_mask = make_src_mask(src).to(device)
-        memory = self.encode(src, src_mask)
+        with torch.no_grad():   # ← critical for speed
+            src = torch.tensor(src_tokens).unsqueeze(0).to(device)
+            src_mask = make_src_mask(src).to(device)
+            memory = self.encode(src, src_mask)
     
-        tgt_tokens = [self.tgt_vocab["<sos>"]]
-        for _ in range(max_len):
-            tgt = torch.tensor(tgt_tokens).unsqueeze(0).to(device)
-            tgt_mask = make_tgt_mask(tgt).to(device)
-            logits = self.decode(memory, src_mask, tgt, tgt_mask)
-            next_token = logits[:, -1, :].argmax(dim=-1).item()
-            tgt_tokens.append(next_token)
-            if next_token == self.tgt_vocab["<eos>"]:
-                break
+            tgt_tokens = [self.tgt_vocab["<sos>"]]
+            for _ in range(max_len):
+                tgt = torch.tensor(tgt_tokens).unsqueeze(0).to(device)
+                tgt_mask = make_tgt_mask(tgt).to(device)
+                logits = self.decode(memory, src_mask, tgt, tgt_mask)
+                next_token = logits[:, -1, :].argmax(dim=-1).item()
+                tgt_tokens.append(next_token)
+                if next_token == self.tgt_vocab["<eos>"]:
+                    break
     
         itos = {v: k for k, v in self.tgt_vocab.items()}
         output_tokens = []
@@ -663,3 +659,5 @@ class Transformer(nn.Module):
             output_tokens.append(itos.get(tok, "<unk>"))
     
         return " ".join(output_tokens)
+    
+    
