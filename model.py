@@ -26,12 +26,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pickle
 
-class LightTokenizer:
-    def __init__(self, nlp):
-        self.tokenizer = nlp.tokenizer
+# class LightTokenizer:
+#     def __init__(self, nlp):
+#         self.tokenizer = nlp.tokenizer
     
-    def __call__(self, text):
-        return self.tokenizer(text)
+#     def __call__(self, text):
+#         return self.tokenizer(text)
 
 # ══════════════════════════════════════════════════════════════════════
 #   STANDALONE ATTENTION FUNCTION  
@@ -655,7 +655,7 @@ class Transformer(nn.Module):
           #     os.path.join(base_dir, "tokenizer.pt"), weights_only=False
           # )
           import pickle
-          with open(os.path.join(base_dir, "tokenizer_light.pkl"), "rb") as f:
+          with open(os.path.join(base_dir, "tokenizer.pkl"), "rb") as f:
             self.src_tokenizer = pickle.load(f)
         tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
         src_tokens = (
