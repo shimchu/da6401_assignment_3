@@ -24,7 +24,14 @@ import spacy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pickle
 
+class LightTokenizer:
+    def __init__(self, nlp):
+        self.tokenizer = nlp.tokenizer
+    
+    def __call__(self, text):
+        return self.tokenizer(text)
 
 # ══════════════════════════════════════════════════════════════════════
 #   STANDALONE ATTENTION FUNCTION  
@@ -623,23 +630,22 @@ class Transformer(nn.Module):
             self.src_vocab = vocab["src_vocab"]
             self.tgt_vocab = vocab["tgt_vocab"]
     
-        # if self.src_tokenizer is None:
-        #     import pickle
-        #     with open(os.path.join(base_dir, "tokenizer.pkl"), "rb") as f:
-        #         self.src_tokenizer = pickle.load(f)
-      
-        if self.src_tokenizer is None:
-          self.src_tokenizer = torch.load(
-              os.path.join(base_dir, "tokenizer.pt"), weights_only=False
-          )
-            
-        tokens = [tok.text.lower() for tok in self.src_tokenizer(src_sentence)]
+ 
+        if not hasattr(self, "test_tokens") or self.test_tokens is None:
+            import json
+            with open(os.path.join(base_dir, "test_tokens.json")) as f:
+                self.test_tokens = json.load(f)
+            self.test_idx = 0
     
-        src_tokens = (
-            [self.src_vocab["<sos>"]]
-            + [self.src_vocab.get(tok, self.src_vocab["<unk>"]) for tok in tokens]
-            + [self.src_vocab["<eos>"]]
-        )
+        # use next pre-tokenized sentence
+        src_tokens = self.test_tokens[self.test_idx % len(self.test_tokens)]
+        self.test_idx += 1
+      
+        # if self.src_tokenizer is None:
+        #   self.src_tokenizer = torch.load(
+        #       os.path.join(base_dir, "tokenizer.pt"), weights_only=False
+        #   )
+        
     
         with torch.no_grad():   # ← critical for speed
             src = torch.tensor(src_tokens).unsqueeze(0).to(device)
