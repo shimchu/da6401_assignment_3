@@ -531,7 +531,7 @@ def run_training_experiment(config = {
         optimizer = optim.Adam(model.parameters(), lr=1.0, betas=(0.9, 0.98), eps=1e-9)
         scheduler = NoamScheduler(optimizer, d_model=config["d_model"], warmup_steps=config["warmup_steps"])
     else:
-        optimizer = optim.Adam(model.parameters(), lr=1e-4)
+        optimizer = optim.Adam(model.parameters(), lr=1e-3)
         scheduler = None
       
     if config["use_label_smoothing"]:
