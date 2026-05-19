@@ -524,7 +524,6 @@ class Transformer(nn.Module):
                 id=file_id,
                 output=model_path,
                 quiet=False,
-                fuzzy=True
             )
         self.load_state_dict(torch.load(model_path, map_location="cpu"))
         print("Loaded model successfully")
