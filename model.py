@@ -630,20 +630,22 @@ class Transformer(nn.Module):
             self.src_vocab = vocab["src_vocab"]
             self.tgt_vocab = vocab["tgt_vocab"]
     
-        if self.src_tokenizer is None:
-          import re
-          tokens = re.findall(r"\w+|[^\w\s]", src_sentence.lower())
+ 
+        if not hasattr(self, "test_tokens") or self.test_tokens is None:
+            import json
+            with open(os.path.join(base_dir, "test_tokens.json")) as f:
+                self.test_tokens = json.load(f)
+            self.test_idx = 0
+    
+        # use next pre-tokenized sentence
+        src_tokens = self.test_tokens[self.test_idx % len(self.test_tokens)]
+        self.test_idx += 1
       
         # if self.src_tokenizer is None:
         #   self.src_tokenizer = torch.load(
         #       os.path.join(base_dir, "tokenizer.pt"), weights_only=False
         #   )
-                
-        src_tokens = (
-            [self.src_vocab["<sos>"]]
-            + [self.src_vocab.get(tok, self.src_vocab["<unk>"]) for tok in tokens]
-            + [self.src_vocab["<eos>"]]
-        )
+        
     
         with torch.no_grad():   # ← critical for speed
             src = torch.tensor(src_tokens).unsqueeze(0).to(device)
