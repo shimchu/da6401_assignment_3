@@ -523,9 +523,11 @@ class Transformer(nn.Module):
             gdown.download(
                 id=file_id,
                 output=model_path,
-                quiet=False,
+                quiet=False
             )
-        self.load_state_dict(torch.load(model_path, map_location="cpu"))
+            
+        ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        self.load_state_dict(ckpt["model_state_dict"])
         print("Loaded model successfully")
           
 
