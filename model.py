@@ -520,7 +520,7 @@ class Transformer(nn.Module):
         if use_checkpoint:
             file_id = "1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE"   
             
-            gdowcn.download(
+            gdown.download(
                 id=file_id,
                 output=model_path,
                 quiet=False,
