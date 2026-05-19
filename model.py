@@ -631,8 +631,8 @@ class Transformer(nn.Module):
             self.tgt_vocab = vocab["tgt_vocab"]
     
         if self.src_tokenizer is None:
-             import re
-              tokens = re.findall(r"\w+|[^\w\s]", src_sentence.lower())
+          import re
+          tokens = re.findall(r"\w+|[^\w\s]", src_sentence.lower())
       
         # if self.src_tokenizer is None:
         #   self.src_tokenizer = torch.load(
