@@ -631,7 +631,7 @@ class Transformer(nn.Module):
             self.tgt_vocab = vocab["tgt_vocab"]
     
  
-       tokens = src_sentence.lower().split()
+        tokens = src_sentence.lower().split()
         # convert to indices
         src_tokens = []
         for tok in tokens:
