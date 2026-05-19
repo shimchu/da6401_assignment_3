@@ -631,15 +631,17 @@ class Transformer(nn.Module):
             self.tgt_vocab = vocab["tgt_vocab"]
     
  
-        if not hasattr(self, "test_tokens") or self.test_tokens is None:
-            import json
-            with open(os.path.join(base_dir, "test_tokens.json")) as f:
-                self.test_tokens = json.load(f)
-            self.test_idx = 0
-    
-        # use next pre-tokenized sentence
-        src_tokens = self.test_tokens[self.test_idx % len(self.test_tokens)]
-        self.test_idx += 1
+       tokens = src_sentence.lower().split()
+        # convert to indices
+        src_tokens = []
+        for tok in tokens:
+            if tok in self.src_vocab:
+                src_tokens.append(self.src_vocab[tok])
+            else:
+                src_tokens.append(self.src_vocab["<unk>"])
+        
+        # add special tokens
+        src_tokens = [self.src_vocab["<sos>"]] + src_tokens + [self.src_vocab["<eos>"]]
       
         # if self.src_tokenizer is None:
         #   self.src_tokenizer = torch.load(
