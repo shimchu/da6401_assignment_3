@@ -476,7 +476,8 @@ class Transformer(nn.Module):
         d_ff:      int   = 2048,
         dropout:   float = 0.1,
         use_scaling = True,
-        use_positional_encoding=True
+        use_positional_encoding=True,
+      use_checkpoint = True
     ) -> None:
         super().__init__()
         # TODO: Instantiate 
@@ -515,15 +516,19 @@ class Transformer(nn.Module):
             "<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3
         }
         self.src_tokenizer = None
-      
-        # if checkpoint_path is not None:
-        #   self.load_state_dict(ckpt["model_state_dict"])
-        #   self.src_vocab = ckpt["src_vocab"]
-        #   self.tgt_vocab = ckpt["tgt_vocab"]
-        # print("Loaded vocab size:", len(self.src_vocab) if self.src_vocab else None)
-
-           
-
+        model_path = os.path.join(base_dir, "best_model.pt")
+        if use_checkpoint:
+            file_id = "1MFjaY6F_OV0t6mosH9PNEXa03h0IYibE"   
+            
+            gdowcn.download(
+                id=file_id,
+                output=model_path,
+                quiet=False,
+                fuzzy=True
+            )
+        self.load_state_dict(torch.load(model_path, map_location="cpu"))
+        print("Loaded model successfully")
+          
 
     # ── AUTOGRADER HOOKS ── keep these signatures exactly ─────────────
 
