@@ -637,22 +637,22 @@ class Transformer(nn.Module):
             self.tgt_vocab = vocab["tgt_vocab"]
     
  
-        tokens = src_sentence.lower().split()
-        # convert to indices
-        src_tokens = []
-        for tok in tokens:
-            if tok in self.src_vocab:
-                src_tokens.append(self.src_vocab[tok])
-            else:
-                src_tokens.append(self.src_vocab["<unk>"])
+        # tokens = src_sentence.lower().split()
+        # # convert to indices
+        # src_tokens = []
+        # for tok in tokens:
+        #     if tok in self.src_vocab:
+        #         src_tokens.append(self.src_vocab[tok])
+        #     else:
+        #         src_tokens.append(self.src_vocab["<unk>"])
         
         # add special tokens
         src_tokens = [self.src_vocab["<sos>"]] + src_tokens + [self.src_vocab["<eos>"]]
       
-        # if self.src_tokenizer is None:
-        #   self.src_tokenizer = torch.load(
-        #       os.path.join(base_dir, "tokenizer.pt"), weights_only=False
-        #   )
+        if self.src_tokenizer is None:
+          self.src_tokenizer = torch.load(
+              os.path.join(base_dir, "tokenizer.pt"), weights_only=False
+          )
         
     
         with torch.no_grad():   # ← critical for speed
