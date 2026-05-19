@@ -24,7 +24,14 @@ import spacy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pickle
 
+class LightTokenizer:
+    def __init__(self, nlp):
+        self.tokenizer = nlp.tokenizer
+    
+    def __call__(self, text):
+        return self.tokenizer(text)
 
 # ══════════════════════════════════════════════════════════════════════
 #   STANDALONE ATTENTION FUNCTION  
